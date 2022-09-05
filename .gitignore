@@ -1,129 +1,108 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+from selenium.webdriver import Chrome
+import requests
+import prettytable as pt
+import json
+from selenium.webdriver import Chrome
+from selenium.webdriver.common.keys import Keys
 
-# C extensions
-*.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+start_city = input('出发城市：')
+end_city = input('目的城市：')
+date = input('出发日期（格式：2022-09-01）：')
+f = open('city.json',encoding='utf-8')#文件读取
+#f.read()字符串
+city_json = json.loads(f.read())#str转换为字典
+#出发城市
+from_station = city_json[start_city]
+#目的城市
+to_station = city_json[end_city]
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
 
-# Translations
-*.mo
-*.pot
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
 
-# Flask stuff:
-instance/
-.webassets-cache
+url = f'https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date={date}&leftTicketDTO.from_station={from_station}&leftTicketDTO.to_station={to_station}&purpose_codes=ADULT'
+header = {
 
-# Scrapy stuff:
-.scrapy
+"user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+    }
+cookie ={
+    'cookies' : '_uab_collina=166201427317641798899567; JSESSIONID=50365A885E06CA015AFE29A4935A11E5; BIGipServerotn=233832970.64545.0000; fo=2wa4pa0760r33g58ZYXd-VvsYqxJKJoC2HSaY9gM6Y_WBMlhRnbSqJdyUeVJ097l1XVDVTm6gQRfeOpjK8ETrl7T4AxSPY9q4EKvxhoYPD7K4gTVmoHniymb32TfAJcJIyOnlIFVO4eN0F0SuTibyTL5Qr3BvRGyJPlqpwW4u1gNPFXswtTaNAAL0MU; BIGipServerpool_passport=182714890.50215.0000; RAIL_EXPIRATION=1662294527038; RAIL_DEVICEID=hYZTGvXdmf7WbyzzyDrsXI_pqn6qhvWS88vSVO0ITNUU5iya_R4Cs8MJ9cC4R6EX0UD8Npj1N1dJ3Z8FmGp-s8rYCNMrWLN2wXO81ctDPNCWZGYSp7IDuTIzO-v-pm2HtLxvlO6dF-a7-5BB9n7F1yJgC436BBOV; guidesStatus=off; highContrastMode=defaltMode; cursorStatus=off; route=c5c62a339e7744272a54643b3be5bf64; _jc_save_fromStation=%u5F00%u5C01%2CKFF; _jc_save_toStation=%u90D1%u5DDE%2CZZF; _jc_save_fromDate=2022-09-01; _jc_save_toDate=2022-09-01; _jc_save_wfdc_flag=dc'
 
-# Sphinx documentation
-docs/_build/
+}
+#通过requests中get请求，对url地址进行请求，携带headers请求头伪装
+response = requests.get(url=url,headers=header,cookies=cookie)
+#print(response.json())
+#print(response.json()['data']['result'])
 
-# PyBuilder
-target/
+#实例化对象
+pt = pt.PrettyTable()
+#添加表头
+pt.field_names = [
 
-# Jupyter Notebook
-.ipynb_checkpoints
+    '出发城市' ,
+    '到达城市' ,
+    '车次' ,
+    '出发时间',
+    '到达时间' ,
+    '车程时间' ,
+    '特等座' ,
+    '一等座' ,
+    '二等座' ,
+    '软卧' ,
+    '硬卧' ,
+    '硬座' ,
+    '无座' ,
+]
 
-# IPython
-profile_default/
-ipython_config.py
 
-# pyenv
-.python-version
+for index in response.json()['data']['result']:
+    info_list = index.split('|')
+    number = info_list[3]  #车次
+    star_time = info_list[8]   #出发时间
+    end_time = info_list[9]   #到达时间
+    use_time = info_list[10]   #车程时间
+    best_Grade = info_list[25]   #特等座
+    first_class = info_list[31] #一等座
+    second_class = info_list[30] #二等座
+    soft_sleeper = info_list[26]  # 软卧
+    hard_sleeper = info_list[28] #硬卧
+    hard_seat = info_list[29] #硬座
+    no_seat = info_list[26] #无座
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
+    dit = {
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
+            '出发城市': start_city,
+            '到达城市': end_city,
+            '车次': number,
+            '出发时间': star_time,
+            '到达时间': end_time,
+            '车程时间': use_time,
+            '特等座': best_Grade,
+            '一等座': first_class,
+            '二等座': second_class,
+            '软卧': soft_sleeper,
+            '硬卧': hard_sleeper,
+            '硬座': hard_seat,
+            '无座': no_seat,
+}
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+    pt.add_row([
 
-# SageMath parsed files
-*.sage.py
+    start_city,
+    end_city,
+    number,
+    star_time,
+    end_time,
+    use_time,
+    best_Grade,
+    first_class ,
+    second_class,
+    soft_sleeper,
+    hard_sleeper,
+    hard_seat,
+    no_seat,
+ ])
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
+    print(pt)
